@@ -1,0 +1,26 @@
+[package]
+name = "chuncord"
+version = "0.1.0"
+authors = ["lemon-sh <pawel.stolarski7@gmail.com>"]
+edition = "2018"
+
+[profile.release]
+lto = true
+
+[dependencies.json]
+version = "0.12"
+
+[dependencies.ureq]
+version = "2"
+default-features = false
+features = [ "tls" ]
+
+[dependencies.multipart]
+version = "0.18"
+default-features = false
+features = [ "client" ]
+
+[dependencies.clap]
+version = "3.0.0-beta.2"
+default-features = false
+features = [ "suggestions", "color", "std" ]
