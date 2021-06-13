@@ -11,6 +11,7 @@ use std::fmt;
 use std::fmt::Formatter;
 use std::thread::sleep;
 use std::time::Duration;
+use ureq::Response;
 
 const MAXBUF: u64 = 8380416;
 
@@ -40,6 +41,7 @@ fn upload_discord(filename: &str, data: &[u8], webhook: &str) -> Result<(String,
     let response = ureq::post(webhook)
         .set("Content-Type", &format!("multipart/form-data; boundary={}", mpdata.boundary()))
         .send(mpdata)?;
+    cool_ratelimit(&response)?;
     let response_string = response.into_string()?;
     let mut rjson = json::parse(&response_string)?;
     let url = rjson["attachments"][0]["url"].take_string().ok_or_else(|| ChuncordError::InvalidApiJson(response_string.clone()))?;
@@ -48,17 +50,19 @@ fn upload_discord(filename: &str, data: &[u8], webhook: &str) -> Result<(String,
 }
 
 fn delete_discord(mid: &str, webhook: &str) -> Result<(), Box<dyn Error>> {
-    match ureq::delete(&format!("{}/messages/{}", webhook, mid)).call() {
-        Err(ureq::Error::Status(429, response)) => {
-            let ratelimit_raw = response.into_string()?;
-            let ratelimit_json = json::parse(&ratelimit_raw)?;
-            let retry_after = ratelimit_json["retry_after"].as_u64().ok_or(ChuncordError::InvalidIndexJson(ratelimit_raw.clone()))?;
-            sleep(Duration::from_millis(retry_after));
-            delete_discord(mid, webhook)
-        }
-        Err(e) => Err(Box::new(e)),
-        Ok(_) => Ok(())
+    let response = ureq::delete(&format!("{}/messages/{}", webhook, mid)).call()?;
+    cool_ratelimit(&response)?;
+    Ok(())
+}
+
+fn cool_ratelimit(resp: &Response) -> Result<(), Box<dyn Error>> {
+    let rt_header: u64 = resp.header("X-RateLimit-Remaining").unwrap().parse()?;
+    if rt_header == 0 {
+        let rt_reset = resp.header("X-RateLimit-Reset-After").unwrap();
+        let sleep_seconds: f64 = rt_reset.parse()?;
+        sleep(Duration::from_secs_f64(sleep_seconds));
     }
+    Ok(())
 }
 
 fn download_file(url: &str) -> Result<impl Read + Send, Box<dyn Error>> {
@@ -83,13 +87,13 @@ fn upload_command(file: &str, webhook: &str) -> Result<(), Box<dyn Error>> {
     let mut index_json = object! {name: filename, parts: {}};
     let mut buffer = vec![0 as u8; MAXBUF as usize];
     for fullread in 0..fullreads {
-        print!("Uploading... [{}/{}]\r", fullread, fullreads);
+        print!("Uploading... [{}/{}] {}%\r", fullread, fullreads, fullread/fullreads);
         io::stdout().flush()?;
         file.read_exact(&mut buffer)?;
         let upload_result = upload_discord(fullread.to_string().as_str(), &buffer, webhook)?;
         index_json["parts"].insert(upload_result.0.as_str(), upload_result.1.as_str())?;
     }
-    print!("Uploading... [{0}/{0}]\r", fullreads);
+    print!("Uploading... [{0}/{0}] 100%\r", fullreads);
     io::stdout().flush()?;
     if lastread > 0 {
         file.read_exact(&mut buffer[0..lastread as usize])?;
@@ -115,7 +119,7 @@ fn download_command(file: Option<&str>, index_url: &str) -> Result<(), Box<dyn E
     let mut file = OpenOptions::new().write(true).create_new(true).open(filename)?;
     let parts = parsed_index["parts"].entries();
     for part in (0..).zip(parts) {
-        print!("Downloading... [{}/{}]\r", part.0, parts_count-1);
+        print!("Downloading... [{}/{}] {}%\r", part.0, parts_count-1, part.0/(parts_count-1));
         io::stdout().flush()?;
         let mut downloaded_part = download_file(part.1.0)?;
         io::copy(&mut downloaded_part, &mut file)?;
@@ -138,7 +142,7 @@ fn delete_command(mid: &str, webhook: &str) -> Result<(), Box<dyn Error>> {
     }
     let parts = index_json["parts"].entries_mut();
     for part in (0..).zip(parts) {
-        print!("Deleting... [{}/{}]\r", part.0, parts_count-1);
+        print!("Deleting... [{}/{}] {}%\r", part.0, parts_count-1, part.0/(parts_count-1));
         io::stdout().flush()?;
         delete_discord(&part.1.1.take_string().ok_or_else(|| ChuncordError::InvalidIndexJson(index.clone()))?, webhook)?;
     }
