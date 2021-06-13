@@ -83,15 +83,15 @@ fn upload_command(file: &str, webhook: &str) -> Result<(), Box<dyn Error>> {
     let mut index_json = object! {name: filename, parts: {}};
     let mut buffer = vec![0 as u8; MAXBUF as usize];
     for fullread in 0..fullreads {
-        print!("Uploading part {}...\r", fullread+1);
+        print!("Uploading... [{}/{}]\r", fullread, fullreads);
         io::stdout().flush()?;
         file.read_exact(&mut buffer)?;
         let upload_result = upload_discord(fullread.to_string().as_str(), &buffer, webhook)?;
         index_json["parts"].insert(upload_result.0.as_str(), upload_result.1.as_str())?;
     }
+    print!("Uploading... [{0}/{0}]\r", fullreads);
+    io::stdout().flush()?;
     if lastread > 0 {
-        print!("Uploading part {}...\r", fullreads+1);
-        io::stdout().flush()?;
         file.read_exact(&mut buffer[0..lastread as usize])?;
         let upload_result = upload_discord(fullreads.to_string().as_str(), &buffer[0..lastread as usize], webhook)?;
         index_json["parts"].insert(upload_result.0.as_str(), upload_result.1.as_str())?;
@@ -115,7 +115,7 @@ fn download_command(file: Option<&str>, index_url: &str) -> Result<(), Box<dyn E
     let mut file = OpenOptions::new().write(true).create_new(true).open(filename)?;
     let parts = parsed_index["parts"].entries();
     for part in (0..).zip(parts) {
-        print!("Downloading part {}...\r", part.0);
+        print!("Downloading... [{}/{}]\r", part.0, parts_count-1);
         io::stdout().flush()?;
         let mut downloaded_part = download_file(part.1.0)?;
         io::copy(&mut downloaded_part, &mut file)?;
@@ -138,7 +138,7 @@ fn delete_command(mid: &str, webhook: &str) -> Result<(), Box<dyn Error>> {
     }
     let parts = index_json["parts"].entries_mut();
     for part in (0..).zip(parts) {
-        print!("Deleting part {}...\r", part.0);
+        print!("Deleting... [{}/{}]\r", part.0, parts_count-1);
         io::stdout().flush()?;
         delete_discord(&part.1.1.take_string().ok_or_else(|| ChuncordError::InvalidIndexJson(index.clone()))?, webhook)?;
     }
