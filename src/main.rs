@@ -85,9 +85,9 @@ fn upload_command(file: &str, webhook: &str) -> Result<(), Box<dyn Error>> {
     let lastread = filesize % MAXBUF;
     file.seek(SeekFrom::Start(0))?;
     let mut index_json = object! {name: filename, parts: {}};
-    let mut buffer = vec![0 as u8; MAXBUF as usize];
+    let mut buffer = vec![0u8; MAXBUF as usize];
     for fullread in 0..fullreads {
-        print!("Uploading... [{}/{}] {}%\r", fullread, fullreads, fullread/fullreads);
+        print!("Uploading... [{}/{}] {}%\r", fullread, fullreads, fullread*100/fullreads);
         io::stdout().flush()?;
         file.read_exact(&mut buffer)?;
         let upload_result = upload_discord(fullread.to_string().as_str(), &buffer, webhook)?;
@@ -115,11 +115,11 @@ fn download_command(file: Option<&str>, index_url: &str) -> Result<(), Box<dyn E
         return Err(Box::new(ChuncordError::InvalidIndexJson(index_json)));
     }
     let index_filename = parsed_index["name"].take_string().ok_or(ChuncordError::InvalidIndexJson(index_json))?;
-    let filename = file.unwrap_or(index_filename.as_str());
+    let filename = file.unwrap_or_else(|| index_filename.as_str());
     let mut file = OpenOptions::new().write(true).create_new(true).open(filename)?;
     let parts = parsed_index["parts"].entries();
     for part in (0..).zip(parts) {
-        print!("Downloading... [{}/{}] {}%\r", part.0, parts_count-1, part.0/(parts_count-1));
+        print!("Downloading... [{}/{}] {}%\r", part.0, parts_count-1, part.0*100/(parts_count-1));
         io::stdout().flush()?;
         let mut downloaded_part = download_file(part.1.0)?;
         io::copy(&mut downloaded_part, &mut file)?;
@@ -142,7 +142,7 @@ fn delete_command(mid: &str, webhook: &str) -> Result<(), Box<dyn Error>> {
     }
     let parts = index_json["parts"].entries_mut();
     for part in (0..).zip(parts) {
-        print!("Deleting... [{}/{}] {}%\r", part.0, parts_count-1, part.0/(parts_count-1));
+        print!("Deleting... [{}/{}] {}%\r", part.0, parts_count-1, part.0*100/(parts_count-1));
         io::stdout().flush()?;
         delete_discord(&part.1.1.take_string().ok_or_else(|| ChuncordError::InvalidIndexJson(index.clone()))?, webhook)?;
     }
