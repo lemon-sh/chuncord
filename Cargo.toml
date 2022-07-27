@@ -1,7 +1,7 @@
 [package]
 name = "chuncord"
 version = "0.1.0"
-authors = ["lemon-sh <pawel.stolarski7@gmail.com>"]
+authors = ["lemonsh <lemon@lemonsh.moe>"]
 edition = "2018"
 
 [profile.release]
