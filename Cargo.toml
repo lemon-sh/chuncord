@@ -2,25 +2,18 @@
 name = "chuncord"
 version = "0.1.0"
 authors = ["lemonsh <lemon@lemonsh.moe>"]
-edition = "2018"
+edition = "2021"
 
 [profile.release]
+strip = "debuginfo"
 lto = true
 
-[dependencies.json]
-version = "0.12"
-
-[dependencies.ureq]
-version = "2"
-default-features = false
-features = [ "tls" ]
-
-[dependencies.multipart]
-version = "0.18"
-default-features = false
-features = [ "client" ]
-
-[dependencies.clap]
-version = "3.0.0-beta.2"
-default-features = false
-features = [ "suggestions", "color", "std" ]
+[dependencies]
+ureq = { version = "2.6", default_features = false, features = ["tls"] }
+multipart = { version = "0.18", default_features = false, features = ["client"] }
+clap = { version = "4.1", default_features = false, features = [ "suggestions", "color", "std", "help", "usage", "derive" ] }
+color-eyre = "0.6"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.7"
+dirs = "5.0"
