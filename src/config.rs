@@ -45,7 +45,7 @@ fn get_configpath() -> io::Result<PathBuf> {
     } else {
         env::current_dir()?
     }
-    .join("dcfzf");
+    .join("chuncord");
     let configpath = configdir.join("config.toml");
     if !configdir.is_dir() {
         fs::create_dir_all(configdir)?;
