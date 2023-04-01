@@ -6,7 +6,7 @@ use clap::{Parser, Subcommand};
 pub struct Args {
     /// Subcommand
     #[clap(subcommand)]
-    pub command: Command
+    pub command: Command,
 }
 
 #[derive(Subcommand, Debug)]
@@ -21,12 +21,12 @@ pub enum Command {
     Download {
         url: String,
         #[clap(short)]
-        output: Option<String>
+        output: Option<String>,
     },
     /// Delete a file
     Delete {
         mid: u64,
         #[clap(short)]
         webhook: Option<String>,
-    }
+    },
 }

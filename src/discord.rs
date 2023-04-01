@@ -1,8 +1,8 @@
 use std::{thread::sleep, time::Duration};
 
-use multipart::client::lazy::Multipart;
-use serde::{Deserializer, Deserialize};
 use color_eyre::Result;
+use multipart::client::lazy::Multipart;
+use serde::{Deserialize, Deserializer};
 use ureq::Response;
 
 fn singleton<'de, D, T>(v: D) -> Result<T, D::Error>
@@ -19,19 +19,15 @@ pub struct DiscordMessage {
     pub id: u64,
     #[serde(rename = "attachments")]
     #[serde(deserialize_with = "singleton")]
-    pub attachment: Attachment
+    pub attachment: Attachment,
 }
 
 #[derive(Deserialize)]
 pub struct Attachment {
-    pub url: String
+    pub url: String,
 }
 
-pub fn upload(
-    filename: String,
-    data: &[u8],
-    webhook: &str,
-) -> Result<DiscordMessage> {
+pub fn upload(filename: String, data: &[u8], webhook: &str) -> Result<DiscordMessage> {
     let mut mp = Multipart::new();
     mp.add_stream("file", data, Some(filename), None);
     let mpdata = mp.prepare()?;

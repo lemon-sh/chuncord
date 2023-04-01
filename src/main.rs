@@ -2,13 +2,15 @@ use clap::Parser;
 use color_eyre::Result;
 
 mod cli;
-mod discord;
-mod config;
-mod read_ext;
 mod commands;
+mod config;
+mod discord;
+mod read_ext;
 
 fn main() -> Result<()> {
-    color_eyre::config::HookBuilder::default().display_env_section(false).install()?;
+    color_eyre::config::HookBuilder::default()
+        .display_env_section(false)
+        .install()?;
     let cli = cli::Args::parse();
     match cli.command {
         cli::Command::Upload { file, webhook } => commands::upload(&file, webhook.as_deref()),
