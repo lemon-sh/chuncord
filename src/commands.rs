@@ -1,6 +1,5 @@
 use std::{
     borrow::Cow,
-    collections::HashMap,
     ffi::OsStr,
     fs::File,
     io::{self, Read, Seek, SeekFrom},
@@ -41,7 +40,7 @@ fn get_webhook(webhook: Option<&str>) -> Result<String> {
 }
 
 fn progress_bars() -> (ProgressStyle, ProgressStyle) {
-    let style_int = ProgressStyle::with_template("{spinner:.green} [{bar:40.blue}] {pos}/{len}")
+    let style_int = ProgressStyle::with_template("{spinner:.green} [{bar:40.blue}] part {pos}/{len}")
         .unwrap()
         .progress_chars("=> ");
 
@@ -57,7 +56,7 @@ fn progress_bars() -> (ProgressStyle, ProgressStyle) {
 struct Index<'a> {
     filename: Cow<'a, str>,
     filesize: u64,
-    parts: HashMap<u64, String>,
+    parts: Vec<(u64, String)>,
 }
 
 pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
@@ -76,7 +75,7 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
         parts_num += 1;
     }
 
-    let mut parts = HashMap::with_capacity(parts_num as usize);
+    let mut parts = Vec::with_capacity(parts_num as usize);
 
     let mpb = MultiProgress::new();
     let pb_file = mpb.add(ProgressBar::new(filesize));
@@ -94,7 +93,7 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
             (&mut file).take(MAXBUF),
             &webhook,
         )?;
-        parts.insert(response.id, response.attachment.url);
+        parts.push((response.id, response.attachment.url));
     }
 
     let index = Index {
@@ -103,7 +102,7 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
         parts,
     };
     let index_json = serde_json::to_string_pretty(&index)?;
-    let response = discord::upload("chuncord_index".into(), index_json.as_bytes(), &webhook)?;
+    let response = discord::upload("chuncord_index.json", index_json.as_bytes(), &webhook)?;
     println!(
         "Done!\nURL: {}\nMID (required for delete): {}",
         response.attachment.url, response.id
@@ -126,7 +125,7 @@ pub fn download(index_url: &str, filename: Option<&str>) -> Result<()> {
 
     let mut file = pb_file.wrap_write(File::create(file)?);
 
-    for part in pb_part.wrap_iter(index.parts.into_values()) {
+    for (_, part) in pb_part.wrap_iter(index.parts.into_iter()) {
         let mut reader = ureq::get(&part).call()?.into_reader();
         io::copy(&mut reader, &mut file)?;
     }
@@ -149,7 +148,7 @@ pub fn delete(mid: u64, webhook: Option<&str>) -> Result<()> {
     let pb = ProgressBar::new(index.parts.len() as u64);
     pb.set_style(progress_bars().0);
 
-    for part in pb.wrap_iter(index.parts.into_keys()) {
+    for (part, _) in pb.wrap_iter(index.parts.into_iter()) {
         discord::delete(part, &webhook)?;
     }
 
