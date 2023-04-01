@@ -1,0 +1,2 @@
+* get rid of the multipart dependency and construct a formdata stream for ureq manually. this will lower memory usage and make the upload progressbar look much better.
+* add a subcommand for managing webhooks in the config: adding, removing and setting as default.
