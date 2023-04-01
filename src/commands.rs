@@ -1,5 +1,6 @@
 use std::{
     borrow::Cow,
+    collections::hash_map::Entry,
     ffi::OsStr,
     fs::File,
     io::{self, Read, Seek, SeekFrom},
@@ -40,9 +41,10 @@ fn get_webhook(webhook: Option<&str>) -> Result<String> {
 }
 
 fn progress_bars() -> (ProgressStyle, ProgressStyle) {
-    let style_int = ProgressStyle::with_template("{spinner:.green} [{bar:40.blue}] part {pos}/{len}")
-        .unwrap()
-        .progress_chars("=> ");
+    let style_int =
+        ProgressStyle::with_template("{spinner:.green} [{bar:40.blue}] part {pos}/{len}")
+            .unwrap()
+            .progress_chars("=> ");
 
     let style_data =
         ProgressStyle::with_template("{spinner:.green} [{bar:40.blue}] {bytes}/{total_bytes}")
@@ -111,7 +113,6 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
 }
 
 pub fn download(index_url: &str, filename: Option<&str>) -> Result<()> {
-    println!("Downloading index...");
     let index: Index = serde_json::from_reader(ureq::get(index_url).call()?.into_reader())?;
     let file = filename.unwrap_or(&index.filename);
 
@@ -136,7 +137,6 @@ pub fn download(index_url: &str, filename: Option<&str>) -> Result<()> {
 
 pub fn delete(mid: u64, webhook: Option<&str>) -> Result<()> {
     let webhook = get_webhook(webhook)?;
-    println!("Downloading index...");
     let index_message_json = ureq::get(&format!("{webhook}/messages/{mid}"))
         .call()?
         .into_reader();
@@ -156,4 +156,44 @@ pub fn delete(mid: u64, webhook: Option<&str>) -> Result<()> {
     discord::delete(mid, &webhook)?;
     println!("\nDone!");
     Ok(())
+}
+
+pub fn add_webhook(name: String, webhook: String) -> Result<()> {
+    let mut cfg = Config::load()?;
+    let entry = cfg.webhooks.entry(name);
+    match entry {
+        Entry::Occupied(_) => return Err(eyre!("Webhook {} already exists", entry.key())),
+        Entry::Vacant(v) => v.insert(webhook),
+    };
+    cfg.save()
+}
+
+pub fn del_webhook(name: String) -> Result<()> {
+    let mut cfg = Config::load()?;
+    if cfg.webhooks.remove(&name).is_none() {
+        return Err(eyre!("Webhook '{name}' not found."))
+    }
+    cfg.save()
+}
+
+pub fn list_webhooks() -> Result<()> {
+    let cfg = Config::load()?;
+    for (name, url) in cfg.webhooks {
+        let default = if cfg.default_webhook.as_deref() == Some(&name) {
+            "[*] "
+        } else {
+            ""
+        };
+        println!(" - {default}{name} \x1b[90m({url})\x1b[0m");
+    }
+    Ok(())
+}
+
+pub fn default_webhook(name: String) -> Result<()> {
+    let mut cfg = Config::load()?;
+    if !cfg.webhooks.contains_key(&name) {
+        return Err(eyre!("Webhook '{name}' not found"))
+    }
+    cfg.default_webhook = Some(name);
+    cfg.save()
 }

@@ -1,1 +1,0 @@
-* add a subcommand for managing webhooks in the config: adding, removing and setting as default.

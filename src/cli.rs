@@ -29,4 +29,21 @@ pub enum Command {
         #[clap(short)]
         webhook: Option<String>,
     },
+    /// Manage webhooks
+    Webhook {
+        #[clap(subcommand)]
+        command: WebhookCommand,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum WebhookCommand {
+    /// Add a new webhook
+    Add { name: String, url: String },
+    /// Delete a webhook
+    Delete { name: String },
+    /// List webhooks
+    List,
+    /// Set a webhook as the default
+    Default { name: String },
 }

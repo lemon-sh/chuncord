@@ -16,5 +16,11 @@ fn main() -> Result<()> {
         cli::Command::Upload { file, webhook } => commands::upload(&file, webhook.as_deref()),
         cli::Command::Download { url, output } => commands::download(&url, output.as_deref()),
         cli::Command::Delete { mid, webhook } => commands::delete(mid, webhook.as_deref()),
+        cli::Command::Webhook { command } => match command {
+            cli::WebhookCommand::Add { name, url } => commands::add_webhook(name, url),
+            cli::WebhookCommand::Delete { name } => commands::del_webhook(name),
+            cli::WebhookCommand::List => commands::list_webhooks(),
+            cli::WebhookCommand::Default { name } => commands::default_webhook(name),
+        },
     }
 }
