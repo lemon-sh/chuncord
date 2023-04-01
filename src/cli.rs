@@ -25,7 +25,7 @@ pub enum Command {
     },
     /// Delete a file
     Delete {
-        file: String,
+        mid: u64,
         #[clap(short)]
         webhook: Option<String>,
     }

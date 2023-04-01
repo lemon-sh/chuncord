@@ -3,17 +3,14 @@ use std::{
 	env,
 	fs::{self, File},
 	io::{self, ErrorKind, Read, Write},
-	path::PathBuf,
+	path::PathBuf, collections::HashMap,
 };
 use color_eyre::{eyre::Result, Report};
 
-#[derive(Serialize, Deserialize)]
-pub struct Config {}
-
-impl Default for Config {
-	fn default() -> Self {
-		Self {}
-	}
+#[derive(Serialize, Deserialize, Default)]
+pub struct Config {
+	pub webhooks: HashMap<String, String>,
+	pub default_webhook: Option<String>
 }
 
 impl Config {

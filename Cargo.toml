@@ -5,7 +5,6 @@ authors = ["lemonsh <lemon@lemonsh.moe>"]
 edition = "2021"
 
 [profile.release]
-strip = "debuginfo"
 lto = true
 
 [dependencies]
@@ -17,3 +16,4 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 toml = "0.7"
 dirs = "5.0"
+indicatif = "0.17"
