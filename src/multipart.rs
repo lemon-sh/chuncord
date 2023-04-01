@@ -1,6 +1,4 @@
-use std::{
-    io::{Cursor, Read},
-};
+use std::io::{Cursor, Read};
 
 use rand::{thread_rng, RngCore};
 

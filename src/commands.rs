@@ -3,7 +3,7 @@ use std::{
     collections::HashMap,
     ffi::OsStr,
     fs::File,
-    io::{self, Seek, SeekFrom},
+    io::{self, Read, Seek, SeekFrom},
     path::Path,
 };
 
@@ -17,7 +17,6 @@ use serde::{Deserialize, Serialize};
 use crate::{
     config::Config,
     discord::{self, DiscordMessage},
-    read_ext::ReadExt,
 };
 
 const MAXBUF: u64 = 8_380_416;
@@ -44,13 +43,12 @@ fn get_webhook(webhook: Option<&str>) -> Result<String> {
 fn progress_bars() -> (ProgressStyle, ProgressStyle) {
     let style_int = ProgressStyle::with_template("{spinner:.green} [{bar:40.blue}] {pos}/{len}")
         .unwrap()
-        .progress_chars("-> ");
+        .progress_chars("=> ");
 
-    let style_data = ProgressStyle::with_template(
-        "{spinner:.green} [{bar:40.blue}] {bytes}/{total_bytes} {bytes_per_sec}",
-    )
-    .unwrap()
-    .progress_chars("-> ");
+    let style_data =
+        ProgressStyle::with_template("{spinner:.green} [{bar:40.blue}] {bytes}/{total_bytes}")
+            .unwrap()
+            .progress_chars("=> ");
 
     (style_int, style_data)
 }
@@ -78,7 +76,6 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
         parts_num += 1;
     }
 
-    let mut buffer = vec![0u8; MAXBUF as usize];
     let mut parts = HashMap::with_capacity(parts_num as usize);
 
     let mpb = MultiProgress::new();
@@ -92,9 +89,11 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
 
     let mut file = pb_file.wrap_read(file);
     for part in pb_part.wrap_iter(0..parts_num) {
-        let part_size = file.read_max(&mut buffer)?;
-        let response =
-            discord::upload(&format!("chuncord_{part}"), &buffer[0..part_size], &webhook)?;
+        let response = discord::upload(
+            &format!("chuncord_{part}"),
+            (&mut file).take(MAXBUF),
+            &webhook,
+        )?;
         parts.insert(response.id, response.attachment.url);
     }
 

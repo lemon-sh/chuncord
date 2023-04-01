@@ -1,4 +1,4 @@
-use std::{thread::sleep, time::Duration};
+use std::{io::Read, thread::sleep, time::Duration};
 
 use color_eyre::Result;
 use serde::{Deserialize, Deserializer};
@@ -46,8 +46,8 @@ mod string {
     }
 }
 
-pub fn upload(filename: &str, data: &[u8], webhook: &str) -> Result<DiscordMessage> {
-    let (mp_content_type, mp_stream) = multipart(data, filename);
+pub fn upload<R: Read>(filename: &str, stream: R, webhook: &str) -> Result<DiscordMessage> {
+    let (mp_content_type, mp_stream) = multipart(stream, filename);
     let response = ureq::post(webhook)
         .set("Content-Type", &mp_content_type)
         .send(mp_stream)?;

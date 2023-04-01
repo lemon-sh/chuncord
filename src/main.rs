@@ -6,7 +6,6 @@ mod commands;
 mod config;
 mod discord;
 mod multipart;
-mod read_ext;
 
 fn main() -> Result<()> {
     color_eyre::config::HookBuilder::default()
