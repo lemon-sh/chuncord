@@ -77,7 +77,7 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
         parts_num += 1;
     }
 
-    let mut parts = Vec::with_capacity(parts_num as usize);
+    let mut parts = Vec::with_capacity(usize::try_from(parts_num)?);
 
     let mpb = MultiProgress::new();
     let pb_file = mpb.add(ProgressBar::new(filesize));
@@ -168,9 +168,9 @@ pub fn add_webhook(name: String, webhook: String) -> Result<()> {
     cfg.save()
 }
 
-pub fn del_webhook(name: String) -> Result<()> {
+pub fn del_webhook(name: &str) -> Result<()> {
     let mut cfg = Config::load()?;
-    if cfg.webhooks.remove(&name).is_none() {
+    if cfg.webhooks.remove(name).is_none() {
         return Err(eyre!("Webhook '{name}' not found."))
     }
     cfg.save()

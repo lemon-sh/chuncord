@@ -1,3 +1,5 @@
+#![allow(clippy::module_name_repetitions)]
+
 use clap::Parser;
 use color_eyre::Result;
 
@@ -18,7 +20,7 @@ fn main() -> Result<()> {
         cli::Command::Delete { mid, webhook } => commands::delete(mid, webhook.as_deref()),
         cli::Command::Webhook { command } => match command {
             cli::WebhookCommand::Add { name, url } => commands::add_webhook(name, url),
-            cli::WebhookCommand::Delete { name } => commands::del_webhook(name),
+            cli::WebhookCommand::Delete { name } => commands::del_webhook(&name),
             cli::WebhookCommand::List => commands::list_webhooks(),
             cli::WebhookCommand::Default { name } => commands::default_webhook(name),
         },
