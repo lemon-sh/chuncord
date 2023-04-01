@@ -16,6 +16,7 @@ where
 
 #[derive(Deserialize)]
 pub struct DiscordMessage {
+    #[serde(with = "string")]
     pub id: u64,
     #[serde(rename = "attachments")]
     #[serde(deserialize_with = "singleton")]
@@ -25,6 +26,23 @@ pub struct DiscordMessage {
 #[derive(Deserialize)]
 pub struct Attachment {
     pub url: String,
+}
+
+// https://github.com/serde-rs/json/issues/329#issuecomment-305608405
+mod string {
+	use serde::{de, Deserialize, Deserializer};
+	use std::{fmt::Display, str::FromStr};
+
+	pub fn deserialize<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+	where
+		T: FromStr,
+		T::Err: Display,
+		D: Deserializer<'de>,
+	{
+		String::deserialize(deserializer)?
+			.parse()
+			.map_err(de::Error::custom)
+	}
 }
 
 pub fn upload(filename: String, data: &[u8], webhook: &str) -> Result<DiscordMessage> {

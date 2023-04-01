@@ -43,13 +43,13 @@ fn get_webhook(webhook: Option<&str>) -> Result<String> {
 
 fn progress_bars() -> (ProgressStyle, ProgressStyle) {
     let style_int = ProgressStyle::with_template(
-        "{spinner:.green} [{bar:40.blue}] {pos}/{len} | {wide_msg:.green}",
+        "{spinner:.green} [{bar:40.blue}] {pos}/{len}",
     )
     .unwrap()
     .progress_chars("-> ");
 
     let style_data = ProgressStyle::with_template(
-		"{spinner:.green} [{bar:40.blue}] {bytes}/{total_bytes} {bytes_per_sec} | {wide_msg:.green}",
+		"{spinner:.green} [{bar:40.blue}] {bytes}/{total_bytes} {bytes_per_sec}",
 	)
 	.unwrap()
 	.progress_chars("-> ");
