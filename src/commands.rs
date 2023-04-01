@@ -42,17 +42,15 @@ fn get_webhook(webhook: Option<&str>) -> Result<String> {
 }
 
 fn progress_bars() -> (ProgressStyle, ProgressStyle) {
-    let style_int = ProgressStyle::with_template(
-        "{spinner:.green} [{bar:40.blue}] {pos}/{len}",
+    let style_int = ProgressStyle::with_template("{spinner:.green} [{bar:40.blue}] {pos}/{len}")
+        .unwrap()
+        .progress_chars("-> ");
+
+    let style_data = ProgressStyle::with_template(
+        "{spinner:.green} [{bar:40.blue}] {bytes}/{total_bytes} {bytes_per_sec}",
     )
     .unwrap()
     .progress_chars("-> ");
-
-    let style_data = ProgressStyle::with_template(
-		"{spinner:.green} [{bar:40.blue}] {bytes}/{total_bytes} {bytes_per_sec}",
-	)
-	.unwrap()
-	.progress_chars("-> ");
 
     (style_int, style_data)
 }
@@ -96,7 +94,7 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
     for part in pb_part.wrap_iter(0..parts_num) {
         let part_size = file.read_max(&mut buffer)?;
         let response =
-            discord::upload(format!("chuncord_{part}"), &buffer[0..part_size], &webhook)?;
+            discord::upload(&format!("chuncord_{part}"), &buffer[0..part_size], &webhook)?;
         parts.insert(response.id, response.attachment.url);
     }
 
@@ -109,7 +107,7 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
     let response = discord::upload("chuncord_index".into(), index_json.as_bytes(), &webhook)?;
     println!(
         "Done!\nURL: {}\nMID (required for delete): {}",
-        response.id, response.attachment.url
+        response.attachment.url, response.id
     );
     Ok(())
 }

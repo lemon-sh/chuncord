@@ -1,9 +1,10 @@
 use std::{thread::sleep, time::Duration};
 
 use color_eyre::Result;
-use multipart::client::lazy::Multipart;
 use serde::{Deserialize, Deserializer};
 use ureq::Response;
+
+use crate::multipart::multipart;
 
 fn singleton<'de, D, T>(v: D) -> Result<T, D::Error>
 where
@@ -30,31 +31,26 @@ pub struct Attachment {
 
 // https://github.com/serde-rs/json/issues/329#issuecomment-305608405
 mod string {
-	use serde::{de, Deserialize, Deserializer};
-	use std::{fmt::Display, str::FromStr};
+    use serde::{de, Deserialize, Deserializer};
+    use std::{fmt::Display, str::FromStr};
 
-	pub fn deserialize<'de, T, D>(deserializer: D) -> Result<T, D::Error>
-	where
-		T: FromStr,
-		T::Err: Display,
-		D: Deserializer<'de>,
-	{
-		String::deserialize(deserializer)?
-			.parse()
-			.map_err(de::Error::custom)
-	}
+    pub fn deserialize<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+    where
+        T: FromStr,
+        T::Err: Display,
+        D: Deserializer<'de>,
+    {
+        String::deserialize(deserializer)?
+            .parse()
+            .map_err(de::Error::custom)
+    }
 }
 
-pub fn upload(filename: String, data: &[u8], webhook: &str) -> Result<DiscordMessage> {
-    let mut mp = Multipart::new();
-    mp.add_stream("file", data, Some(filename), None);
-    let mpdata = mp.prepare()?;
+pub fn upload(filename: &str, data: &[u8], webhook: &str) -> Result<DiscordMessage> {
+    let (mp_content_type, mp_stream) = multipart(data, filename);
     let response = ureq::post(webhook)
-        .set(
-            "Content-Type",
-            &format!("multipart/form-data; boundary={}", mpdata.boundary()),
-        )
-        .send(mpdata)?;
+        .set("Content-Type", &mp_content_type)
+        .send(mp_stream)?;
     cool_ratelimit(&response)?;
     Ok(serde_json::from_reader(response.into_reader())?)
 }
