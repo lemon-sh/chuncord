@@ -152,9 +152,9 @@ pub fn delete(mid: u64, webhook: Option<&str>) -> Result<()> {
         discord::delete(part, &webhook)?;
     }
 
-    println!("\nDeleting index...");
+    println!("Deleting index...");
     discord::delete(mid, &webhook)?;
-    println!("\nDone!");
+    println!("Done!");
     Ok(())
 }
 
