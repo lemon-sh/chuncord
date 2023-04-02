@@ -160,10 +160,16 @@ pub fn delete(mid: u64, webhook: Option<&str>) -> Result<()> {
 
 pub fn add_webhook(name: String, webhook: String) -> Result<()> {
     let mut cfg = Config::load()?;
+    let set_default = cfg.webhooks.is_empty();
     let entry = cfg.webhooks.entry(name);
     match entry {
         Entry::Occupied(_) => return Err(eyre!("Webhook {} already exists", entry.key())),
-        Entry::Vacant(v) => v.insert(webhook),
+        Entry::Vacant(v) => {
+            if set_default {
+                cfg.default_webhook = Some(webhook.clone())
+            }
+            v.insert(webhook);
+        },
     };
     cfg.save()
 }
