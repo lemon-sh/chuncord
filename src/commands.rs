@@ -58,7 +58,7 @@ fn progress_bars() -> (ProgressStyle, ProgressStyle) {
 struct Index<'a> {
     filename: Cow<'a, str>,
     filesize: u64,
-    parts: Vec<(u64, String)>,
+    parts: Vec<(u64, Cow<'a, str>)>,
 }
 
 pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
@@ -95,7 +95,7 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
             (&mut file).take(MAXBUF),
             &webhook,
         )?;
-        parts.push((response.id, response.attachment.url));
+        parts.push((response.id, response.attachment.url.into()));
     }
 
     pb_file.finish_and_clear();
@@ -105,8 +105,9 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
         filesize,
         parts,
     };
-    let index_json = serde_json::to_string_pretty(&index)?;
-    let response = discord::upload("chuncord_index.json", index_json.as_bytes(), &webhook)?;
+    let index_toml = toml::to_string(&index)?;
+    let stream = include_bytes!("index_header.toml").chain(index_toml.as_bytes());
+    let response = discord::upload("chuncord_index.toml", stream, &webhook)?;
     println!(
         "Done!\nURL: {}\nMID (required for delete): {}",
         response.attachment.url, response.id
@@ -115,7 +116,7 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
 }
 
 pub fn download(index_url: &str, filename: Option<&str>) -> Result<()> {
-    let index: Index = serde_json::from_reader(ureq::get(index_url).call()?.into_reader())?;
+    let index: Index = toml::from_str(ureq::get(index_url).call()?.into_string()?.as_str())?;
     let file = filename.unwrap_or(&index.filename);
 
     let mpb = MultiProgress::new();
@@ -146,8 +147,8 @@ pub fn delete(mid: u64, webhook: Option<&str>) -> Result<()> {
         .into_reader();
     let index_message: DiscordMessage = serde_json::from_reader(index_message_json)?;
     let index_url = index_message.attachment.url;
-    let index_json = ureq::get(&index_url).call()?.into_reader();
-    let index: Index = serde_json::from_reader(index_json)?;
+    let index_toml = ureq::get(&index_url).call()?.into_string()?;
+    let index: Index = toml::from_str(&index_toml)?;
 
     let pb = ProgressBar::new(index.parts.len() as u64);
     pb.set_style(progress_bars().0);
