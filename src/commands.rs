@@ -98,6 +98,8 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
         parts.push((response.id, response.attachment.url));
     }
 
+    pb_file.finish_and_clear();
+
     let index = Index {
         filename: filename.into(),
         filesize,
@@ -131,7 +133,9 @@ pub fn download(index_url: &str, filename: Option<&str>) -> Result<()> {
         io::copy(&mut reader, &mut file)?;
     }
 
-    println!("\nDone!");
+    pb_file.finish_and_clear();
+
+    println!("Done!");
     Ok(())
 }
 
