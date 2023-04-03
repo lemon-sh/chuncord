@@ -19,7 +19,8 @@ use crate::{
     discord::{self, DiscordMessage},
 };
 
-const MAXBUF: u64 = 8_380_416;
+// https://www.reddit.com/r/discordapp/comments/ohs5wh/the_8_mebibyte_file_upload_limit_is_a_lie/
+const MAXBUF: u64 = 8388284;
 
 fn get_webhook(webhook: Option<&str>) -> Result<String> {
     if let Some(webhook) = webhook {
@@ -56,8 +57,8 @@ fn progress_bars() -> (ProgressStyle, ProgressStyle) {
 
 #[derive(Serialize, Deserialize)]
 struct Index<'a> {
-    filename: Cow<'a, str>,
-    filesize: u64,
+    name: Cow<'a, str>,
+    size: u64,
     parts: Vec<(u64, Cow<'a, str>)>,
 }
 
@@ -101,8 +102,8 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
     pb_file.finish_and_clear();
 
     let index = Index {
-        filename: filename.into(),
-        filesize,
+        name: filename.into(),
+        size: filesize,
         parts,
     };
     let index_toml = toml::to_string(&index)?;
@@ -117,10 +118,10 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
 
 pub fn download(index_url: &str, filename: Option<&str>) -> Result<()> {
     let index: Index = toml::from_str(ureq::get(index_url).call()?.into_string()?.as_str())?;
-    let file = filename.unwrap_or(&index.filename);
+    let file = filename.unwrap_or(&index.name);
 
     let mpb = MultiProgress::new();
-    let pb_file = mpb.add(ProgressBar::new(index.filesize));
+    let pb_file = mpb.add(ProgressBar::new(index.size));
     let pb_part = mpb.add(ProgressBar::new(index.parts.len() as u64));
 
     let (style_int, style_data) = progress_bars();
