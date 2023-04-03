@@ -117,7 +117,7 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
 }
 
 pub fn download(index_url: &str, filename: Option<&str>) -> Result<()> {
-    let index: Index = toml::from_str(ureq::get(index_url).call()?.into_string()?.as_str())?;
+    let index: Index = toml::from_str(&ureq::get(index_url).call()?.into_string()?)?;
     let file = filename.unwrap_or(&index.name);
 
     let mpb = MultiProgress::new();
