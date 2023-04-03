@@ -1,0 +1,1 @@
+* uploading from stdin and downloading to stdout
