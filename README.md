@@ -6,7 +6,7 @@ Note: You need to have Git and the Rust toolchain installed.
 
 - Clone and compile `chuncord`:
   ```sh
-  git clone https://git.lemonsh.moe/lemon/chuncord
+  git clone https://git.lemonsh.moe/lemon/chuncord --depth 1 --branch 0.1  # latest release
   cd chuncord
   cargo build --release
   ```
