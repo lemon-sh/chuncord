@@ -2,25 +2,31 @@
 Tool that allows for uploading large files to Discord in parts using webhooks.
 
 ## Getting started
-Note: You need to have Git and the Rust toolchain installed.
+Note: You need to have the Rust toolchain installed.
 
-- Clone and compile `chuncord`:
+- Install Chuncord:
   ```sh
-  git clone https://git.lemonsh.moe/lemon/chuncord --depth 1 --branch 0.1  # latest release
-  cd chuncord
-  cargo build --release
+  cargo install --git https://git.lemonsh.moe/lemon/chuncord --tag 0.1
   ```
-  `chuncord` will be in `target/release/chuncord`.
 
 - Add a Discord webhook
   ```sh
-  cd target/release
-  ./chuncord webhook add mywebhook <webhook URL>
+  chuncord webhook add mywebhook <webhook URL>
   ```
 
 - Upload something
   ```sh
-  ./chuncord upload ~/Downloads/frog.tar
+  chuncord upload ~/Downloads/frog.tar
   ```
 
-- For more help, see `./chuncord --help`
+- Download it
+  ```sh
+  chuncord download <index URL from the upload step>
+  ```
+
+- Delete it
+  ```sh
+  chuncord delete <MID from the upload step>
+  ```
+
+- For more help, see `./chuncord --help` and the [ArchWiki article](https://wiki.archlinux.org/title/Chuncord).
