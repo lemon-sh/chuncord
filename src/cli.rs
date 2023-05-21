@@ -19,12 +19,14 @@ pub enum Command {
     },
     /// Download a file
     Download {
+        /// URL of the index file
         url: String,
         #[clap(short)]
         output: Option<String>,
     },
     /// Delete a file
     Delete {
+        /// Message ID of the index
         mid: u64,
         #[clap(short)]
         webhook: Option<String>,
