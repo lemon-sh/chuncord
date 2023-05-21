@@ -21,6 +21,7 @@ pub enum Command {
     Download {
         /// URL of the index file
         url: String,
+        /// The path to save the file in. If unspecified or a directory, the original filename will be used.
         #[clap(short)]
         output: Option<String>,
     },
