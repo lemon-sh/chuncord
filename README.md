@@ -1,6 +1,10 @@
 # chuncord
 Tool that allows for uploading large files to Discord in parts using webhooks.
 
+## AUR package
+
+If you're using Arch Linux, there's an [AUR package](https://aur.archlinux.org/packages/chuncord) available.
+
 ## Getting started
 Note: You need to have the Rust toolchain installed.
 
