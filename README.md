@@ -10,7 +10,7 @@ Note: You need to have the Rust toolchain installed.
 
 - Install Chuncord:
   ```sh
-  cargo install --git https://git.lemonsh.moe/lemon/chuncord --tag 0.1
+  cargo install --git https://git.lemonsh.moe/lemon/chuncord --tag 0.2
   ```
 
 - Add a Discord webhook
