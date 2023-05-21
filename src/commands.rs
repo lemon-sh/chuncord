@@ -19,8 +19,7 @@ use crate::{
     discord::{self, DiscordMessage},
 };
 
-// https://www.reddit.com/r/discordapp/comments/ohs5wh/the_8_mebibyte_file_upload_limit_is_a_lie/
-const MAXBUF: u64 = 8388284;
+const MAXBUF: u64 = 26210000;
 
 fn get_webhook(webhook: Option<&str>) -> Result<String> {
     if let Some(webhook) = webhook {
