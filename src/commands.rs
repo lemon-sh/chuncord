@@ -115,9 +115,19 @@ pub fn upload(file: &str, webhook: Option<&str>) -> Result<()> {
     Ok(())
 }
 
-pub fn download(index_url: &str, filename: Option<&str>) -> Result<()> {
+pub fn download(index_url: &str, path: Option<&str>) -> Result<()> {
     let index: Index = toml::from_str(&ureq::get(index_url).call()?.into_string()?)?;
-    let file = filename.unwrap_or(&index.name);
+    let path = if let Some(path) = path {
+        let path = Path::new(path);
+        if path.is_dir() {
+            path.join(index.name.as_ref())
+        } else {
+            path.into()
+        }
+    } else {
+        Path::new(index.name.as_ref()).into()
+    };
+    
 
     let mpb = MultiProgress::new();
     let pb_file = mpb.add(ProgressBar::new(index.size));
@@ -127,7 +137,7 @@ pub fn download(index_url: &str, filename: Option<&str>) -> Result<()> {
     pb_file.set_style(style_data);
     pb_part.set_style(style_int);
 
-    let mut file = pb_file.wrap_write(File::create(file)?);
+    let mut file = pb_file.wrap_write(File::create(path)?);
 
     for (_, part) in pb_part.wrap_iter(index.parts.into_iter()) {
         let mut reader = ureq::get(&part).call()?.into_reader();
