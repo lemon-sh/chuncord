@@ -19,7 +19,7 @@ use crate::{
     discord::{self, DiscordMessage},
 };
 
-const MAXBUF: u64 = 26210000;
+const MAXBUF: u64 = 26_210_000;
 
 fn get_webhook(webhook: Option<&str>) -> Result<String> {
     if let Some(webhook) = webhook {
@@ -181,7 +181,7 @@ pub fn add_webhook(name: String, url: String) -> Result<()> {
         Entry::Occupied(_) => return Err(eyre!("Webhook {} already exists", entry.key())),
         Entry::Vacant(v) => {
             if set_default {
-                cfg.default_webhook = Some(name)
+                cfg.default_webhook = Some(name);
             }
             v.insert(url);
         },
